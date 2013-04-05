@@ -93,18 +93,136 @@ class CsvQueryTest extends PHPUnit_Framework_TestCase
         ));
     }
 
-    public function testQueryWithColumnMapperSumAndGroupBy()
+    public function testWhere()
     {
-        $car = CsvQuery::Field('car', array('LOWER', 'car'));
-        $distance = CsvQuery::Field('distance', array('SUM', array('ABS', 'distance')));
+        $car = CsvQuery::Field('car');
+
+        $this->query->select(array($car))
+            ->from(dirname(__FILE__) . '/trips.csv')
+            ->where(array('=', $car, 'Toyota'));
+        $result = $this->query->execute();
+        $this->assertEquals($result, array(
+            array('Toyota'),
+            array('Toyota'),
+        ));
+    }
+
+    public function testWhereIn()
+    {
+        $car = CsvQuery::Field('car');
+
+        $this->query->select(array($car))
+            ->from(dirname(__FILE__) . '/trips.csv')
+            ->where(array('IN', $car, array('Toyota')));
+        $result = $this->query->execute();
+        $this->assertEquals($result, array(
+            array('Toyota'),
+            array('Toyota'),
+        ));
+    }
+
+    public function testWhereWithColumnMapper()
+    {
+        $car = CsvQuery::Field('car');
+        $car_upper = CsvQuery::Field('car', array('UPPER', 'car'));
+
+        $this->query->select(array($car))
+            ->from(dirname(__FILE__) . '/trips.csv')
+            ->where(array('=', $car_upper, 'FORD'));
+        $result = $this->query->execute();
+        $this->assertEquals($result, array(
+            array('Ford'),
+        ));
+    }
+
+    public function testIteratorCache()
+    {
+        $nested_array = array(
+            'a' => array(
+                'b' => 1,
+                'c' => 2,
+            ),
+            'd' => array(
+                'e' => 3,
+                'f' => 4,
+            )
+        );
+        $output = array();
+        while ($out = CsvQuery::iterate_cache($nested_array, 2)) {
+            $output[] = $out;
+        }
+        $this->assertEquals($output, array(1,2,3,4));
+    }
+
+    public function testIteratorCacheOneLevel()
+    {
+        $nested_array = array(
+            'a' => array(
+                'b' => 1,
+                'c' => array('f' => 5),
+            ),
+            'd' => array(
+                'e' => 3,
+                'f' => 4,
+            )
+        );
+        $output = array();
+        while ($out = CsvQuery::iterate_cache($nested_array, 1)) {
+            $output[] = $out;
+        }
+        $this->assertEquals($output, array(
+            array('b' => 1, 'c' => array('f' => 5)),
+            array('e' => 3, 'f' => 4),
+        ));
+    }
+
+    public function testQueryWithSumAndGroupBy()
+    {
+        $car = CsvQuery::Field('car');
+        $distance = CsvQuery::Field('distance', array('SUM', 'distance'));
 
         $this->query->select(array($car, $distance))
             ->from(dirname(__FILE__) . '/trips.csv')
             ->group_by(array($car));
         $result = $this->query->execute();
         $this->assertEquals($result, array(
-            array('toyota', 60),
-            array('ford', 40),
+            array('Toyota', 20),
+            array('Ford', 40),
+        ));
+    }
+
+    public function testQueryWithColumnMapperSumAndGroupBy()
+    {
+        $car = CsvQuery::Field('car');
+        $distance = CsvQuery::Field('distance', 
+            array('SUM', array('ABS', 'distance'))
+        );
+
+        $this->query->select(array($car, $distance))
+            ->from(dirname(__FILE__) . '/trips.csv')
+            ->group_by(array($car));
+        $result = $this->query->execute();
+        $this->assertEquals($result, array(
+            array('Toyota', 60),
+            array('Ford', 40),
+        ));
+    }
+
+    public function testQueryWithNestedColumnMapperSumAndGroupBy()
+    {
+        $car = CsvQuery::Field('car');
+        $speed = CsvQuery::Field('speed', array('/',
+            array('SUM', array('ABS', 'distance')),
+            array('SUM', 'time_spent'),
+        ));
+
+        $this->query->select(array($car, $speed))
+            ->from(dirname(__FILE__) . '/trips.csv')
+            ->group_by(array($car));
+        $result = $this->query->execute();
+        $this->assertEquals($result, array(
+            array('Toyota', 60/9),
+            array('Ford', 40/8),
         ));
     }
 }

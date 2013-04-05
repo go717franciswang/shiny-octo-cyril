@@ -30,6 +30,7 @@ class CsvFieldTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(array_values($field->reducers), array(
             array('SUM', array('COLUMN_MAPPER', $keys[0]))
         ));
+        print_r($field);
     }
 
     public function testReducersOutsiderColumnMappers()
@@ -40,9 +41,8 @@ class CsvFieldTest extends PHPUnit_Framework_TestCase
             array('SUM', 'time_spent'),
         ));
         $keys = array_keys($field->reducers);
-        $this->assertEquals($field->final_mapper, 
+        $this->assertEquals($field->column_mappers[$field->final_mapper_key], 
             array('CsvColumnMappers::divide', array('REDUCER', $keys[0]), array('REDUCER', $keys[1]))
         );
-        print_r($field);
     }
 }

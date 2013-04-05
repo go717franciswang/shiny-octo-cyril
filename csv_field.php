@@ -4,7 +4,7 @@ class CsvField
 {
     public $column_mappers = array();
     public $reducers = array();
-    public $final_mapper;
+    public $final_mapper_key;
     public $alias;
 
     public function __construct($alias, $mapper=array())
@@ -50,7 +50,7 @@ class CsvField
             $key = md5(strtolower(print_r($transformer,1)));
 
             if ($computation_level == 0) {
-                $this->final_mapper = $transformer;
+                $this->final_mapper_key = $key;
             }
 
             if (in_array($func, array('SUM','MIN','MAX'))) {

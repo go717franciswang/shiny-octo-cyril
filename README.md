@@ -1,3 +1,4 @@
+# TODO update readme
 # example usage
 $campaign_id = CsvQuery::Field('campaign_id');
 $kwd = CsvQuery::Field('okkw', array(
@@ -21,8 +22,8 @@ $query = new CsvQuery
 
 $result = $query->execute();
 
-# $result = array_like_object(
-#   row('campaign_id' => .., 'kwd' => .., 'sst_in' => ..),
-#   row('campaign_id' => .., 'kwd' => .., 'sst_in' => ..),
-#   ...
-# );
+$result = array_like_object(
+  row('campaign_id' => .., 'kwd' => .., 'sst_in' => ..),
+  row('campaign_id' => .., 'kwd' => .., 'sst_in' => ..),
+  ...
+);

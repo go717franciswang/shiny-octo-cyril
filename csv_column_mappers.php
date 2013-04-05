@@ -32,4 +32,19 @@ class CsvColumnMappers
         }
         return $division;
     }
+
+    public static function equal($a, $b)
+    {
+        return $a == $b;
+    }
+
+    public static function not_equal($a, $b)
+    {
+        return $a != $b;
+    }
+
+    public static function in($a, $b)
+    {
+        return in_array($a, $b);
+    }
 }
