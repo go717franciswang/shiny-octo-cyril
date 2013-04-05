@@ -8,6 +8,7 @@ class CsvQuery
 {
     public $select, $from, $where, $group_by;
     public $headers, $header_idx;
+    public $return_type = 'list';
 
     public static function Field($alias, $options = array())
     {
@@ -19,8 +20,12 @@ class CsvQuery
         $this->headers = $headers;
     }
 
-    public function execute()
+    public function execute($options=array())
     {
+        if (isset($options['return_type'])) {
+            $this->return_type = $options['return_type'];
+        }
+
         $this->validate_statement();
         $this->open_file();
         $this->read_headers();
@@ -102,7 +107,7 @@ class CsvQuery
                 foreach ($this->select as $field) {
                     $row_out[] = $this->get_column_mapper($field->final_mapper_key, $field, $row, $cache);
                 }
-                $result[] = $row_out;
+                $result[] = $this->build_row($row_out);
             }
         }
 
@@ -120,12 +125,28 @@ class CsvQuery
                         );
                     }
                 }
-                $result[] = $row_out;
+                $result[] = $this->build_row($row_out);
             }
         }
 
         fclose($this->fh);
         return $result;
+    }
+
+    private function build_row($row)
+    {
+        if ($this->return_type == 'list') {
+            return $row;
+        } elseif ($this->return_type == 'associative') {
+            $new_row = array();
+            foreach ($this->select as $idx => $field) {
+                $new_row[$field->alias] = $row[$idx];
+            }
+
+            return $new_row;
+        } else {
+            throw new InvalidReturnType($this->return_type);
+        }
     }
 
     private function get_row()

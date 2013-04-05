@@ -2,7 +2,7 @@ Example usage
 -------------
 
 #Instantiation
-$query = new CsvQuery;
+`$query = new CsvQuery;`
 
 #Simple select clause
     $distance = CsvQuery::Field('distance');

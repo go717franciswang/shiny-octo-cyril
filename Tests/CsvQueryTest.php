@@ -226,4 +226,17 @@ class CsvQueryTest extends PHPUnit_Framework_TestCase
             array('Ford', 40/8),
         ));
     }
+
+    public function testResultAssociativeArray()
+    {
+        $car = CsvQuery::Field('car');
+        $this->query->select(array($car))
+            ->from(dirname(__FILE__) . '/trips.csv');
+        $result = $this->query->execute(array('return_type' => 'associative'));
+        $this->assertEquals($result, array(
+            array('car' => 'Toyota'),
+            array('car' => 'Toyota'),
+            array('car' => 'Ford'),
+        ));
+    }
 }
