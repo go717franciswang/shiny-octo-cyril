@@ -41,6 +41,16 @@ class CsvQueryTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($this->query->headers, array('car', 'distance', 'time_spent'));
     }
 
+    public function testSpecifyHeaderAndHeaderNotRead()
+    {
+        $this->query->set_headers(array('vehicle', 'miles', 'hours'));
+        $distance = CsvQuery::Field('miles');
+        $this->query->select(array($distance))
+                    ->from(dirname(__FILE__) . '/trips.csv');
+        $this->query->execute();
+        $this->assertEquals($this->query->headers, array('vehicle', 'miles', 'hours'));
+    }
+
     public function testQuery()
     {
         $distance = CsvQuery::Field('distance');
@@ -132,47 +142,6 @@ class CsvQueryTest extends PHPUnit_Framework_TestCase
         $result = $this->query->execute();
         $this->assertEquals($result, array(
             array('Ford'),
-        ));
-    }
-
-    public function testIteratorCache()
-    {
-        $nested_array = array(
-            'a' => array(
-                'b' => 1,
-                'c' => 2,
-            ),
-            'd' => array(
-                'e' => 3,
-                'f' => 4,
-            )
-        );
-        $output = array();
-        while ($out = CsvQuery::iterate_cache($nested_array, 2)) {
-            $output[] = $out;
-        }
-        $this->assertEquals($output, array(1,2,3,4));
-    }
-
-    public function testIteratorCacheOneLevel()
-    {
-        $nested_array = array(
-            'a' => array(
-                'b' => 1,
-                'c' => array('f' => 5),
-            ),
-            'd' => array(
-                'e' => 3,
-                'f' => 4,
-            )
-        );
-        $output = array();
-        while ($out = CsvQuery::iterate_cache($nested_array, 1)) {
-            $output[] = $out;
-        }
-        $this->assertEquals($output, array(
-            array('b' => 1, 'c' => array('f' => 5)),
-            array('e' => 3, 'f' => 4),
         ));
     }
 

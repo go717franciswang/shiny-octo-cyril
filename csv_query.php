@@ -1,8 +1,8 @@
 <?php
 
-require dirname(__FILE__) . '/csv_field.php';
-require dirname(__FILE__) . '/csv_exceptions.php';
-require dirname(__FILE__) . '/csv_column_mappers.php';
+require_once dirname(__FILE__) . '/csv_field.php';
+require_once dirname(__FILE__) . '/csv_exceptions.php';
+require_once dirname(__FILE__) . '/csv_column_mappers.php';
 
 class CsvQuery
 {
@@ -14,6 +14,11 @@ class CsvQuery
         return new CsvField($alias, $options);
     }
 
+    public function set_headers($headers)
+    {
+        $this->headers = $headers;
+    }
+
     public function execute()
     {
         $this->validate_statement();
@@ -22,8 +27,10 @@ class CsvQuery
 
         $result = array();
         $group_by_cache = array();
+        $group_by_cache_idx = array();
+        $idx = 0;
 
-        while ($row = fgetcsv($this->fh)) {
+        while ($row = $this->get_row()) {
             $cache = array();
 
             if ($this->where_exists()) {
@@ -33,7 +40,7 @@ class CsvQuery
             }
 
             if ($this->group_by_exists()) {
-                $cache_ref = &$group_by_cache;
+                $cache_ref = &$group_by_cache_idx;
                 foreach ($this->group_by as $field) {
                     $key = $this->get_column_mapper($field->final_mapper_key, $field, $row, $cache);
                     if (!isset($cache_ref[$key])) {
@@ -42,15 +49,17 @@ class CsvQuery
                     $cache_ref = &$cache_ref[$key];
                 }
 
-                if (!isset($cache_ref['result_row'])) {
-                    $cache_ref['result_row'] = array();
-                    $cache_ref['reducers'] = array();
+                if ($cache_ref === array()) {
+                    $cache_ref = $idx;
+                    $group_by_cache[$cache_ref]['result_row'] = array();
+                    $group_by_cache[$cache_ref]['reducers'] = array();
+                    $idx += 1;
                 }
 
                 foreach ($this->select as $field_idx => $field) {
                     if (empty($field->reducers)) {
-                        if (empty($cache_ref['result_row'][$field_idx])) {
-                            $cache_ref['result_row'][$field_idx] = 
+                        if (empty($group_by_cache[$cache_ref]['result_row'][$field_idx])) {
+                            $group_by_cache[$cache_ref]['result_row'][$field_idx] = 
                                 $this->get_column_mapper($field->final_mapper_key, $field, $row, $cache);
                         }
                     } else {
@@ -65,22 +74,22 @@ class CsvQuery
                             }
 
                             if ($func == 'SUM') {
-                                if (isset($cache_ref['reducers'][$reducer_key])) {
-                                    $cache_ref['reducers'][$reducer_key] += $val;
+                                if (isset($group_by_cache[$cache_ref]['reducers'][$reducer_key])) {
+                                    $group_by_cache[$cache_ref]['reducers'][$reducer_key] += $val;
                                 } else {
-                                    $cache_ref['reducers'][$reducer_key] = $val;
+                                    $group_by_cache[$cache_ref]['reducers'][$reducer_key] = $val;
                                 }
                             } elseif ($func == 'MAX') {
-                                if (!isset($cache_ref['reducers'][$reducer_key]) ||
-                                    $cache_ref['reducers'][$reducer_key] < $val
+                                if (!isset($group_by_cache[$cache_ref]['reducers'][$reducer_key]) ||
+                                    $group_by_cache[$cache_ref]['reducers'][$reducer_key] < $val
                                 ) {
-                                    $cache_ref['reducers'][$reducer_key] = $val;
+                                    $group_by_cache[$cache_ref]['reducers'][$reducer_key] = $val;
                                 }
                             } elseif ($func == 'MIN') {
-                                if (!isset($cache_ref['reducers'][$reducer_key]) ||
-                                    $cache_ref['reducers'][$reducer_key] > $val
+                                if (!isset($group_by_cache[$cache_ref]['reducers'][$reducer_key]) ||
+                                    $group_by_cache[$cache_ref]['reducers'][$reducer_key] > $val
                                 ) {
-                                    $cache_ref['reducers'][$reducer_key] = $val;
+                                    $group_by_cache[$cache_ref]['reducers'][$reducer_key] = $val;
                                 }
                             }
                         }
@@ -99,7 +108,7 @@ class CsvQuery
 
         if ($this->group_by_exists()) {
             $levels = count($this->group_by);
-            while ($cache_ref = self::iterate_cache($group_by_cache, $levels)) {
+            foreach ($group_by_cache as $cache_ref) {
                 $cache = $cache_ref['reducers'];
                 $row_out = array();
                 foreach ($this->select as $field_idx => $field) {
@@ -119,24 +128,13 @@ class CsvQuery
         return $result;
     }
 
-    public static function iterate_cache(&$group_by_cache, $level, &$parent=null)
+    private function get_row()
     {
-        if (is_null($group_by_cache)) {
-            return null;
+        # return fgetcsv($this->fh);
+        if ($line = stream_get_line($this->fh, 10000, "\n")) {
+            return explode(',', $line);
         }
-
-        if ($level == 1) {
-            $val = current($group_by_cache);
-            next($group_by_cache);
-        } else {
-            $val = self::iterate_cache($group_by_cache[key($group_by_cache)], $level - 1, $group_by_cache);
-        }
-        if (is_null(key($group_by_cache))) {
-            if ($parent) {
-                next($parent);
-            }
-        }
-        return $val;
+        return null;
     }
 
     private function get_column_mapper($key, $field, $row, &$cache)
@@ -225,7 +223,9 @@ class CsvQuery
 
     private function read_headers()
     {
-        $this->headers = fgetcsv($this->fh);
+        if (empty($this->headers)) {
+            $this->headers = $this->get_row();
+        }
         $this->header_idx = array();
         foreach ($this->headers as $idx => $header) {
             $this->header_idx[$header] = $idx;

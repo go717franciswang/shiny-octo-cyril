@@ -30,7 +30,6 @@ class CsvFieldTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(array_values($field->reducers), array(
             array('SUM', array('COLUMN_MAPPER', $keys[0]))
         ));
-        print_r($field);
     }
 
     public function testReducersOutsiderColumnMappers()

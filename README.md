@@ -26,8 +26,7 @@ $query = new CsvQuery;
     $query->select(array($distance))
           ->from('trips.csv')
           ->where(array('=', $car, 'Toyota'));
-or
-          ->where(array('IN', $car, array('Toyota', 'Ford')));
+or `->where(array('IN', $car, array('Toyota', 'Ford')));`
 
 #Group by clause
     $car = CsvQuery::Field('car');
