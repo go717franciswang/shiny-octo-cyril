@@ -43,8 +43,50 @@ class CsvColumnMappers
         return $a != $b;
     }
 
+    public static function gt($a, $b)
+    {
+        return $a > $b;
+    }
+
+    public static function gte($a, $b)
+    {
+        return $a >= $b;
+    }
+
+    public static function lt($a, $b)
+    {
+        return $a < $b;
+    }
+
+    public static function lte($a, $b)
+    {
+        return $a <= $b;
+    }
+
     public static function in($a, $b)
     {
         return in_array($a, $b);
+    }
+
+    public static function and_operator()
+    {
+        $args = func_get_args();
+        foreach ($args as $arg) {
+            if ($arg == false) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static function or_operator()
+    {
+        $args = func_get_args();
+        foreach ($args as $arg) {
+            if ($arg == true) {
+                return true;
+            }
+        }
+        return false;
     }
 }

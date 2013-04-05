@@ -131,6 +131,38 @@ class CsvQueryTest extends PHPUnit_Framework_TestCase
         ));
     }
 
+    public function testWhereGt()
+    {
+        $car = CsvQuery::Field('car');
+        $distance = CsvQuery::Field('distance');
+
+        $this->query->select(array($car, $distance))
+            ->from(dirname(__FILE__) . '/trips.csv')
+            ->where(array('>', $distance, 30));
+        $result = $this->query->execute();
+        $this->assertEquals($result, array(
+            array('Toyota', 40),
+            array('Ford', 40),
+        ));
+    }
+
+    public function testWhereAnd()
+    {
+        $car = CsvQuery::Field('car');
+        $distance = CsvQuery::Field('distance');
+
+        $this->query->select(array($car, $distance))
+            ->from(dirname(__FILE__) . '/trips.csv')
+            ->where(array('AND', 
+                array('>', $distance, 30),
+                array('=', $car, 'Toyota'),
+            ));
+        $result = $this->query->execute();
+        $this->assertEquals($result, array(
+            array('Toyota', 40),
+        ));
+    }
+
     public function testWhereWithColumnMapper()
     {
         $car = CsvQuery::Field('car');

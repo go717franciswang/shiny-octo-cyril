@@ -130,7 +130,6 @@ class CsvQuery
 
     private function get_row()
     {
-        # return fgetcsv($this->fh);
         if ($line = stream_get_line($this->fh, 10000, "\n")) {
             return explode(',', $line);
         }
@@ -170,6 +169,18 @@ class CsvQuery
             $func = 'CsvColumnMappers::not_equal';
         } elseif ($func == 'IN') {
             $func = 'CsvColumnMappers::in';
+        } elseif ($func == 'AND') {
+            $func = 'CsvColumnMappers::and_operator';
+        } elseif ($func == 'OR') {
+            $func = 'CsvColumnMappers::or_operator';
+        } elseif ($func == '>') {
+            $func = 'CsvColumnMappers::gt';
+        } elseif ($func == '>=') {
+            $func = 'CsvColumnMappers::gte';
+        } elseif ($func == '<') {
+            $func = 'CsvColumnMappers::lt';
+        } elseif ($func == '<=') {
+            $func = 'CsvColumnMappers::lte';
         }
 
         $args_final = array();
@@ -235,26 +246,6 @@ class CsvQuery
     private function get_column($header, $row)
     {
         return $row[$this->header_idx[$header]];
-    }
-
-    private function map_columns($column_mapper, $row, $field)
-    {
-        $func = $column_mapper[0];
-        $args = array_slice($column_mapper, 1);
-
-        if ($func == 'COLUMN_MAPPER' || $func = 'REDUCER') {
-
-        }
-
-        foreach ($args as &$arg) {
-            if (is_array($arg)) {
-                $arg = $this->map_columns($arg, $row);
-            } else {
-                $arg = $this->get_column($arg, $row);
-            }
-        }
-
-        return call_user_func_array($func, $args);
     }
 
     public function select($fields)
