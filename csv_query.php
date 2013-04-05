@@ -218,15 +218,6 @@ class CsvQuery
         return call_user_func_array($func, $args_final);
     }
 
-    private function calculate_value($field, $row)
-    {
-        if (empty($field->final_mapper)) {
-            return $this->get_column($field->alias, $row);
-        } else {
-            return $this->map_columns($field->final_mapper, $row);
-        }
-    }
-
     private function where_exists()
     {
         return !empty($this->where);
