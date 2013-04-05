@@ -1,29 +1,40 @@
-# TODO update readme
-# example usage
-$campaign_id = CsvQuery::Field('campaign_id');
-$kwd = CsvQuery::Field('okkw', array(
-    'mappers' => array('TRIM', 'LOWER'), 
-    'alias' => 'kwd'
-));
-$sst_in = CsvQuery::Field('clicks_incoming', array(
-    'reducers' => array('SUM'),
-    'alias' => 'sst_in',
-));
+Example usage
+-------------
 
-$query = new CsvQuery
-    ->select(array($campaign_id, $kwd, $sst_in))
-    ->from($filename)
-    ->where(array(
-        array($campaign_id, 'IN', $campaign_ids), 
-        'AND',
-        array($kwd, '!=', 'foo'),
-    )))
-    ->group_by(array($campaign_id, $kwd));
+#Instantiation
+$query = new CsvQuery;
 
-$result = $query->execute();
+#Simple select clause
+    $distance = CsvQuery::Field('distance');
+    $query->select(array($distance))
+          ->from('trips.csv');
+    $query->execute();
 
-$result = array_like_object(
-  row('campaign_id' => .., 'kwd' => .., 'sst_in' => ..),
-  row('campaign_id' => .., 'kwd' => .., 'sst_in' => ..),
-  ...
-);
+#Select clause with transformation
+    $car_lower = CsvQuery::Field('car', array('LOWER', 'car'));
+    $distance = CsvQuery::Field('distance', array('ABS', 'distance'));
+    $query->select(array($car_lower, $distance));
+
+#Select clause with nested transformation
+    $speed = CsvQuery::Field('speed', array('/',
+        array('ABS', 'distance'),
+        'time_spent',
+    ));
+
+#Where clause
+    $car = CsvQuery::Field('car');
+    $query->select(array($distance))
+          ->from('trips.csv')
+          ->where(array('=', $car, 'Toyota'));
+or
+          ->where(array('IN', $car, array('Toyota', 'Ford')));
+
+#Group by clause
+    $car = CsvQuery::Field('car');
+    $speed = CsvQuery::Field('speed', array('/', 
+        array('SUM', 'distance'), 
+        array('SUM', 'time_spent')
+    ));
+    $query->select(array($car, $speed))
+          ->from('trips.csv')
+          ->group_by(array($car));
