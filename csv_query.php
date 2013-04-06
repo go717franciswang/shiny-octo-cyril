@@ -7,8 +7,9 @@ require_once dirname(__FILE__) . '/csv_column_mappers.php';
 class CsvQuery
 {
     public $select, $from, $where, $group_by;
-    public $headers, $header_idx;
+    public $headers, $header_idx, $header_count;
     public $return_type = 'list';
+    public $delimiter = ',';
 
     public static function Field($alias, $options = array())
     {
@@ -18,6 +19,11 @@ class CsvQuery
     public function set_headers($headers)
     {
         $this->headers = $headers;
+    }
+
+    public function set_delimiter($delimiter)
+    {
+        $this->delimiter = $delimiter;
     }
 
     public function execute($options=array())
@@ -36,6 +42,9 @@ class CsvQuery
         $idx = 0;
 
         while ($row = $this->get_row()) {
+            if (!$this->validate_row($row)) {
+                continue;
+            }
             $cache = array();
 
             if ($this->where_exists()) {
@@ -133,6 +142,14 @@ class CsvQuery
         return $result;
     }
 
+    private function validate_row($row)
+    {
+        if (count($row) < $this->header_count) {
+            return false;
+        }
+        return true;
+    }
+
     private function build_row($row)
     {
         if ($this->return_type == 'list') {
@@ -152,7 +169,7 @@ class CsvQuery
     private function get_row()
     {
         if ($line = stream_get_line($this->fh, 10000, "\n")) {
-            return explode(',', $line);
+            return explode($this->delimiter, $line);
         }
         return null;
     }
@@ -253,6 +270,7 @@ class CsvQuery
         foreach ($this->headers as $idx => $header) {
             $this->header_idx[$header] = $idx;
         }
+        $this->header_count = count($this->headers);
     }
 
     private function get_column($header, $row)
