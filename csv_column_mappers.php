@@ -89,4 +89,13 @@ class CsvColumnMappers
         }
         return false;
     }
+
+    public static function not_operator($condition)
+    {
+        if ($condition) {
+            return false;
+        } else {
+            return true;
+        }
+    }
 }

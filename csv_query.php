@@ -207,6 +207,8 @@ class CsvQuery
             $func = 'CsvColumnMappers::not_equal';
         } elseif ($func == 'IN') {
             $func = 'CsvColumnMappers::in';
+        } elseif ($func == 'NOT') {
+            $func = 'CsvColumnMappers::not_operator';
         } elseif ($func == 'AND') {
             $func = 'CsvColumnMappers::and_operator';
         } elseif ($func == 'OR') {
