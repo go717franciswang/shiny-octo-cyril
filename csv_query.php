@@ -10,6 +10,10 @@ class CsvQuery
     public $headers, $header_idx, $header_count;
     public $return_type = 'list';
     public $delimiter = ',';
+    private static $funcs_use_arr_arg = array(
+        'CsvColumnMappers::in' => true,
+        'ARRAY_KEY_EXISTS' => true,
+    );
 
     public static function Field($alias, $options = array())
     {
@@ -227,7 +231,7 @@ class CsvQuery
         foreach ($args as $arg_idx => $arg) {
             if (is_a($arg, 'CsvField')) {
                 $args_final[] = $this->get_column_mapper($arg->final_mapper_key, $arg, $row, $cache);
-            } elseif (is_array($arg) && !($func == 'CsvColumnMappers::in' && $arg_idx != 2)) {
+            } elseif (is_array($arg) && !(isset(self::$funcs_use_arr_arg[$func]) && $arg_idx != 2)) {
                 $args_final[] = $this->eval_condition($arg, $row, $cache);
             } else {
                 $args_final[] = $arg;
